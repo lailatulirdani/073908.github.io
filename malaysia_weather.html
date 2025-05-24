@@ -67,11 +67,6 @@
         <p>Select a city to view current weather.</p>
       </div>
 
-      <div class="text-center mt-4">
-        <button class="btn btn-light me-2" onclick="loadWeatherChart()">📊 Load City Weather Chart</button>
-        <button class="btn btn-light" onclick="loadDailyChart()">📈 Load 7-Day Forecast</button>
-      </div>
-
       <canvas id="weatherChart"></canvas>
       <canvas id="dailyChart"></canvas>
 
@@ -87,83 +82,83 @@
 
     async function getWeather() {
       const city = document.getElementById("citySelect").value;
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
+      if (!city) return;
+
+      const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
+      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
       try {
-        const res = await fetch(url);
-        const data = await res.json();
+        // Get current weather
+        const resCurrent = await fetch(currentUrl);
+        const dataCurrent = await resCurrent.json();
 
-        if (data.cod !== 200) {
-          document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${data.message}</p>`;
+        if (dataCurrent.cod !== 200) {
+          document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${dataCurrent.message}</p>`;
           return;
         }
 
         const weatherHTML = `
           <div class="weather-icon">
-            <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" class="icon-large"/>
+            <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
           </div>
-          <h3>${data.name}</h3>
-          <p class="weather-info">🌡️ Temperature: ${data.main.temp} °C</p>
-          <p class="weather-info">💧 Humidity: ${data.main.humidity}%</p>
-          <p class="weather-info">🌬️ Wind Speed: ${data.wind.speed} m/s</p>
-          <p class="weather-info">☁️ Condition: ${data.weather[0].description}</p>
+          <h3>${dataCurrent.name}</h3>
+          <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
+          <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
+          <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
+          <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
         `;
 
         document.getElementById("weatherResult").innerHTML = weatherHTML;
+
+        // Load both charts automatically
+        await loadHourlyChart(city);
+        await loadDailyChart(city);
       } catch (error) {
         document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
       }
     }
 
-    async function loadWeatherChart() {
-      const cities = ["Kuala Lumpur", "George Town", "Johor Bahru", "Kota Kinabalu", "Kuching", "Ipoh", "Shah Alam", "Malacca"];
-      const temps = [];
+    async function loadHourlyChart(city) {
+      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
-      for (let city of cities) {
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          temps.push(data.main.temp);
-        } catch (error) {
-          temps.push(null);
-        }
-      }
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
 
-      const ctx = document.getElementById('weatherChart').getContext('2d');
-      if (weatherChart) weatherChart.destroy();
+        const labels = data.list.slice(0, 8).map(item => item.dt_txt.split(" ")[1].slice(0, 5));
+        const temps = data.list.slice(0, 8).map(item => item.main.temp);
 
-      weatherChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: cities,
-          datasets: [{
-            label: 'Temperature (°C)',
-            data: temps,
-            backgroundColor: 'rgba(255, 206, 86, 0.7)',
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Current Temperature in Major Cities'
+        const ctx = document.getElementById('weatherChart').getContext('2d');
+        if (weatherChart) weatherChart.destroy();
+
+        weatherChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `Hourly Temperature in ${city}`,
+              data: temps,
+              backgroundColor: 'rgba(255, 206, 86, 0.7)',
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: `Temperature by Hour in ${city}`
+              }
             }
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.error("Error loading hourly chart:", error);
+      }
     }
 
-    async function loadDailyChart() {
-      const city = document.getElementById("citySelect").value;
-      if (!city) {
-        alert("Please select a city first.");
-        return;
-      }
-
+    async function loadDailyChart(city) {
       const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
       try {
@@ -173,9 +168,7 @@
         const dailyTemps = {};
         data.list.forEach(item => {
           const date = item.dt_txt.split(" ")[0];
-          if (!dailyTemps[date]) {
-            dailyTemps[date] = [];
-          }
+          if (!dailyTemps[date]) dailyTemps[date] = [];
           dailyTemps[date].push(item.main.temp);
         });
 
@@ -213,7 +206,7 @@
           }
         });
       } catch (error) {
-        alert("Error fetching daily forecast.");
+        console.error("Error loading daily chart:", error);
       }
     }
   </script>
