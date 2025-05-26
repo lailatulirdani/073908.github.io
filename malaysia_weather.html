@@ -80,20 +80,50 @@
     <canvas id="dailyChart" style="max-height: 300px;"></canvas>
   </div>
 
-  <script>
-    const apiKey = "f7e9df249fc00b82cf885c146d590a95"; 
-    let weatherChart, dailyChart;
+<script>
+  const apiKey = "f7e9df249fc00b82cf885c146d590a95";
+  let weatherChart, dailyChart;
 
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      const city = document.getElementById('cityInput').value.trim();
-      if (city !== "") {
-        loadHourlyChart(city);
-        loadDailyChart(city);
+  async function getWeather() {
+    const city = document.getElementById("citySelect").value;
+    if (!city) return;
+
+    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+
+    try {
+      const resCurrent = await fetch(currentUrl);
+      const dataCurrent = await resCurrent.json();
+
+      if (dataCurrent.cod !== 200) {
+        document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${dataCurrent.message}</p>`;
+        return;
       }
-    });
 
-    async function loadHourlyChart(city) {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const weatherHTML = `
+        <div class="weather-icon">
+          <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
+        </div>
+        <h3>${dataCurrent.name}</h3>
+        <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
+        <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
+        <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
+        <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
+      `;
+
+      document.getElementById("weatherResult").innerHTML = weatherHTML;
+
+      await loadHourlyChart(city);
+      await loadDailyChart(city);
+    } catch (error) {
+      document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
+    }
+  }
+
+  async function loadHourlyChart(city) {
+    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+
+    try {
       const res = await fetch(url);
       const data = await res.json();
 
@@ -104,57 +134,69 @@
       if (weatherChart) weatherChart.destroy();
 
       const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-      gradient.addColorStop(0, 'rgba(255, 200, 100, 0.8)');
-      gradient.addColorStop(1, 'rgba(255, 140, 0, 0.2)');
+      gradient.addColorStop(0, 'rgba(255, 206, 86, 0.8)');
+      gradient.addColorStop(1, 'rgba(255, 159, 64, 0.5)');
 
       weatherChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
           labels: labels,
           datasets: [{
-            label: `Hourly Temp (°C)`,
+            label: `Hourly Temperature in ${city}`,
             data: temps,
-            fill: true,
             backgroundColor: gradient,
-            borderColor: '#FFD700',
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: 'white',
-            pointBorderColor: '#FFA500'
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1,
+            hoverBackgroundColor: 'rgba(255, 206, 86, 1)'
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
           scales: {
-            x: {
-              ticks: { color: '#fff' },
-              grid: { display: false }
-            },
             y: {
-              ticks: { color: '#fff' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
+              beginAtZero: false,
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
             }
           },
           plugins: {
-            legend: { labels: { color: 'white' } },
-            tooltip: {
-              callbacks: {
-                label: context => `${context.parsed.y}°C`
-              }
-            },
             title: {
               display: true,
-              text: `Hourly Temperature for ${city}`,
-              color: '#fff'
+              text: `Temperature by Hour in ${city}`,
+              color: 'white',
+              font: {
+                size: 16
+              }
+            },
+            legend: {
+              labels: {
+                color: 'white'
+              }
             }
           }
         }
       });
+    } catch (error) {
+      console.error("Error loading hourly chart:", error);
     }
+  }
 
-    async function loadDailyChart(city) {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+  async function loadDailyChart(city) {
+    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+
+    try {
       const res = await fetch(url);
       const data = await res.json();
 
@@ -169,55 +211,74 @@
       const avgTemps = dates.map(date => {
         const temps = dailyTemps[date];
         const sum = temps.reduce((a, b) => a + b, 0);
-        return +(sum / temps.length).toFixed(1);
+        return (sum / temps.length).toFixed(2);
       });
 
       const ctx = document.getElementById('dailyChart').getContext('2d');
       if (dailyChart) dailyChart.destroy();
 
+      const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(54, 162, 235, 0.7)');
+      gradient.addColorStop(1, 'rgba(153, 102, 255, 0.3)');
+
       dailyChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
-          labels: dates.map(date => new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })),
+          labels: dates,
           datasets: [{
-            label: 'Avg Temp (°C)',
+            label: `7-Day Avg Temperature in ${city}`,
             data: avgTemps,
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            borderRadius: 6
+            fill: true,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: gradient,
+            tension: 0.4,
+            pointBackgroundColor: 'white',
+            pointRadius: 5
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
           scales: {
-            x: {
-              ticks: { color: '#fff' },
-              grid: { display: false }
-            },
             y: {
-              ticks: { color: '#fff' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: 'white'
+              },
+              grid: {
+                color: 'rgba(255,255,255,0.1)'
+              }
             }
           },
           plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => `Avg Temp: ${ctx.parsed.y}°C`
-              }
-            },
             title: {
               display: true,
-              text: `7-Day Temperature Forecast`,
-              color: '#fff'
+              text: '7-Day Temperature Forecast',
+              color: 'white',
+              font: {
+                size: 16
+              }
+            },
+            legend: {
+              labels: {
+                color: 'white'
+              }
             }
           }
         }
       });
+    } catch (error) {
+      console.error("Error loading daily chart:", error);
     }
-  </script>
+  }
+</script>
+
 
 </body>
 </html>
