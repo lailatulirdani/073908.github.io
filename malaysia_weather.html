@@ -1,3 +1,4 @@
+[media pointer="file-service://file-1rP3Hj9TugskQ9HaRU29uZ"]
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,28 +21,24 @@
       backdrop-filter: blur(10px);
       padding: 30px;
       box-shadow: 0 4px 30px rgba(0,0,0,0.3);
-      overflow-x: auto;
+      overflow-x: auto; /* supaya carta tak tersepit */
     }
-
+    
     h2, .weather-icon {
       text-align: center;
     }
-
     .weather-info {
       font-size: 1.2rem;
     }
-
     .icon-large {
       width: 100px;
     }
-
     canvas {
       background-color: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
       padding: 20px;
       margin-top: 30px;
     }
-
     .input-group .form-select,
     .input-group .btn {
       border-radius: 10px !important;
@@ -95,6 +92,7 @@
       const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
       try {
+        // Get current weather
         const resCurrent = await fetch(currentUrl);
         const dataCurrent = await resCurrent.json();
 
@@ -116,6 +114,7 @@
 
         document.getElementById("weatherResult").innerHTML = weatherHTML;
 
+        // Load both charts automatically
         await loadHourlyChart(city);
         await loadDailyChart(city);
       } catch (error) {
@@ -136,10 +135,6 @@
         const ctx = document.getElementById('weatherChart').getContext('2d');
         if (weatherChart) weatherChart.destroy();
 
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, '#00c6ff');
-        gradient.addColorStop(1, '#0072ff');
-
         weatherChart = new Chart(ctx, {
           type: 'bar',
           data: {
@@ -147,8 +142,9 @@
             datasets: [{
               label: `Hourly Temperature in ${city}`,
               data: temps,
-              backgroundColor: gradient,
-              borderRadius: 10
+              backgroundColor: 'rgba(255, 206, 86, 0.7)',
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1
             }]
           },
           options: {
@@ -156,19 +152,7 @@
             plugins: {
               title: {
                 display: true,
-                text: `Temperature by Hour in ${city}`,
-                color: '#fff'
-              },
-              legend: {
-                labels: { color: '#fff' }
-              }
-            },
-            scales: {
-              x: {
-                ticks: { color: '#fff' }
-              },
-              y: {
-                ticks: { color: '#fff' }
+                text: `Temperature by Hour in ${city}`
               }
             }
           }
@@ -202,10 +186,6 @@
         const ctx = document.getElementById('dailyChart').getContext('2d');
         if (dailyChart) dailyChart.destroy();
 
-        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255, 99, 132, 0.5)');
-        gradient.addColorStop(1, 'rgba(255, 159, 64, 0.2)');
-
         dailyChart = new Chart(ctx, {
           type: 'line',
           data: {
@@ -214,13 +194,9 @@
               label: `7-Day Avg Temperature in ${city}`,
               data: avgTemps,
               fill: true,
-              borderColor: '#ff6384',
-              backgroundColor: gradient,
-              tension: 0.4,
-              pointBackgroundColor: '#fff',
-              pointBorderColor: '#ff6384',
-              pointRadius: 6,
-              pointHoverRadius: 8
+              borderColor: 'rgba(255, 99, 132, 1)',
+              backgroundColor: 'rgba(255, 99, 132, 0.3)',
+              tension: 0.4
             }]
           },
           options: {
@@ -228,19 +204,7 @@
             plugins: {
               title: {
                 display: true,
-                text: '7-Day Temperature Forecast',
-                color: '#fff'
-              },
-              legend: {
-                labels: { color: '#fff' }
-              }
-            },
-            scales: {
-              x: {
-                ticks: { color: '#fff' }
-              },
-              y: {
-                ticks: { color: '#fff' }
+                text: '7-Day Temperature Forecast'
               }
             }
           }
