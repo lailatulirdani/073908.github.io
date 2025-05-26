@@ -1,3 +1,4 @@
+[media pointer="file-service://file-1rP3Hj9TugskQ9HaRU29uZ"]
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,28 +36,13 @@
     canvas {
       background-color: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
+      padding: 20px;
       margin-top: 30px;
-      width: 100% !important;
-      height: 250px !important;
     }
     .input-group .form-select,
     .input-group .btn {
       border-radius: 10px !important;
     }
-@media (max-width: 768px) {
-    canvas {
-      height: 200px !important;
-    }
-  }
-
-  .icon-large {
-    width: 80px;
-    height: 80px;
-  }
-
-  .weather-info {
-    font-size: 14px;
-  }
   </style>
 </head>
 <body>
@@ -94,202 +80,198 @@
     </div>
   </div>
 
-<script>
-  const apiKey = "f7e9df249fc00b82cf885c146d590a95";
-  let weatherChart, dailyChart;
+  <script>
+const apiKey = "f7e9df249fc00b82cf885c146d590a95";
+let weatherChart, dailyChart;
 
-  async function getWeather() {
-    const city = document.getElementById("citySelect").value;
-    if (!city) return;
+async function getWeather() {
+  const city = document.getElementById("citySelect").value;
+  if (!city) return;
 
-    const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+  const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
+  const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
-    try {
-      const resCurrent = await fetch(currentUrl);
-      const dataCurrent = await resCurrent.json();
+  try {
+    const resCurrent = await fetch(currentUrl);
+    const dataCurrent = await resCurrent.json();
 
-      if (dataCurrent.cod !== 200) {
-        document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${dataCurrent.message}</p>`;
-        return;
+    if (dataCurrent.cod !== 200) {
+      document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${dataCurrent.message}</p>`;
+      return;
+    }
+
+    const weatherHTML = `
+      <div class="weather-icon">
+        <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
+      </div>
+      <h3>${dataCurrent.name}</h3>
+      <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
+      <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
+      <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
+      <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
+    `;
+    document.getElementById("weatherResult").innerHTML = weatherHTML;
+
+    await loadHourlyChart(city);
+    await loadDailyChart(city);
+  } catch (error) {
+    document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
+  }
+}
+
+async function loadHourlyChart(city) {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const labels = data.list.slice(0, 8).map(item => item.dt_txt.split(" ")[1].slice(0, 5));
+    const temps = data.list.slice(0, 8).map(item => item.main.temp);
+
+    const ctx = document.getElementById('weatherChart').getContext('2d');
+    if (weatherChart) weatherChart.destroy();
+
+    weatherChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: `Hourly Temp in ${city}`,
+          data: temps,
+          backgroundColor: 'rgba(255, 206, 86, 0.7)',
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1,
+          barThickness: 'flex'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 2,
+        plugins: {
+          title: {
+            display: true,
+            text: `Temperature by Hour in ${city}`,
+            font: {
+              size: 16
+            }
+          },
+          legend: {
+            labels: {
+              font: {
+                size: 12
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              font: {
+                size: 12
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: {
+                size: 12
+              }
+            }
+          }
+        }
       }
-
-      const weatherHTML = `
-        <div class="weather-icon">
-          <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
-        </div>
-        <h3>${dataCurrent.name}</h3>
-        <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
-        <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
-        <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
-        <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
-      `;
-
-      document.getElementById("weatherResult").innerHTML = weatherHTML;
-
-      // Load charts
-      await loadHourlyChart(city);
-      await loadDailyChart(city);
-    } catch (error) {
-      document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
-    }
+    });
+  } catch (error) {
+    console.error("Error loading hourly chart:", error);
   }
+}
 
-  async function loadHourlyChart(city) {
-    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+async function loadDailyChart(city) {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
 
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-      const labels = data.list.slice(0, 8).map(item => item.dt_txt.split(" ")[1].slice(0, 5));
-      const temps = data.list.slice(0, 8).map(item => item.main.temp);
+    const dailyTemps = {};
+    data.list.forEach(item => {
+      const date = item.dt_txt.split(" ")[0];
+      if (!dailyTemps[date]) dailyTemps[date] = [];
+      dailyTemps[date].push(item.main.temp);
+    });
 
-      const ctx = document.getElementById('weatherChart').getContext('2d');
-      if (weatherChart) weatherChart.destroy();
+    const dates = Object.keys(dailyTemps).slice(0, 7);
+    const avgTemps = dates.map(date => {
+      const temps = dailyTemps[date];
+      const sum = temps.reduce((a, b) => a + b, 0);
+      return (sum / temps.length).toFixed(2);
+    });
 
-      weatherChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `Hourly Temperature`,
-            data: temps,
-            backgroundColor: 'rgba(255, 206, 86, 0.7)',
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1,
-            maxBarThickness: 40
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          responsive: true,
-          layout: {
-            padding: 10
-          },
-          scales: {
-            x: {
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
+    const ctx = document.getElementById('dailyChart').getContext('2d');
+    if (dailyChart) dailyChart.destroy();
+
+    dailyChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: `7-Day Avg Temp in ${city}`,
+          data: avgTemps,
+          fill: true,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: 'rgba(255, 99, 132, 0.3)',
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        aspectRatio: 2,
+        plugins: {
+          title: {
+            display: true,
+            text: '7-Day Temperature Forecast',
+            font: {
+              size: 16
             }
           },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                font: {
-                  size: 12
-                }
-              }
-            },
-            title: {
-              display: true,
-              text: `Hourly Forecast for ${city}`,
+          legend: {
+            labels: {
               font: {
-                size: 14
+                size: 12
               }
             }
           }
-        }
-      });
-    } catch (error) {
-      console.error("Error loading hourly chart:", error);
-    }
-  }
-
-  async function loadDailyChart(city) {
-    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
-
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-
-      const dailyTemps = {};
-      data.list.forEach(item => {
-        const date = item.dt_txt.split(" ")[0];
-        if (!dailyTemps[date]) dailyTemps[date] = [];
-        dailyTemps[date].push(item.main.temp);
-      });
-
-      const dates = Object.keys(dailyTemps).slice(0, 7);
-      const avgTemps = dates.map(date => {
-        const temps = dailyTemps[date];
-        const sum = temps.reduce((a, b) => a + b, 0);
-        return (sum / temps.length).toFixed(2);
-      });
-
-      const ctx = document.getElementById('dailyChart').getContext('2d');
-      if (dailyChart) dailyChart.destroy();
-
-      dailyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: `Avg Temp`,
-            data: avgTemps,
-            fill: true,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.4
-          }]
         },
-        options: {
-          maintainAspectRatio: false,
-          responsive: true,
-          layout: {
-            padding: 10
-          },
-          scales: {
-            x: {
-              ticks: {
-                font: {
-                  size: 10
-                }
-              }
-            },
-            y: {
-              ticks: {
-                font: {
-                  size: 10
-                }
+        scales: {
+          x: {
+            ticks: {
+              font: {
+                size: 12
               }
             }
           },
-          plugins: {
-            legend: {
-              position: 'top',
-              labels: {
-                font: {
-                  size: 12
-                }
-              }
-            },
-            title: {
-              display: true,
-              text: `7-Day Forecast for ${city}`,
+          y: {
+            ticks: {
               font: {
-                size: 14
-              }
+                size: 12
+              },
+              beginAtZero: true
             }
           }
         }
-      });
-    } catch (error) {
-      console.error("Error loading daily chart:", error);
-    }
+      }
+    });
+  } catch (error) {
+    console.error("Error loading daily chart:", error);
   }
-</script>
+}
 
+  </script>
 </body>
 </html>
