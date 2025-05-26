@@ -3,89 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Malaysia Weather Monitoring by City</title>
+  <title>Malaysia Weather Monitoring</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      background: linear-gradient(to right, #2980b9, #6dd5fa);
+      background: linear-gradient(to right, #1e3c72, #2a5298);
       color: white;
       font-family: 'Segoe UI', sans-serif;
-      padding-top: 50px;
+      padding: 1rem;
     }
 
     .card-glass {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 15px;
       backdrop-filter: blur(10px);
-      padding: 30px;
-      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
-      overflow-x: auto;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      margin-bottom: 2rem;
     }
 
-    h2, .weather-icon {
-      text-align: center;
+    .weather-icon img {
+      width: 80px;
     }
 
-    .weather-info {
-      font-size: 1.2rem;
-    }
-
-    .icon-large {
-      width: 100px;
+    select, button {
+      border-radius: 10px;
     }
 
     canvas {
-      background-color: rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
-      padding: 20px;
-      margin-top: 30px;
+      margin-top: 1.5rem;
     }
 
-    .input-group .form-select,
-    .input-group .btn {
-      border-radius: 10px !important;
+    @media (max-width: 576px) {
+      canvas {
+        min-width: 100%;
+      }
+    }
+
+    .chart-container {
+      overflow-x: auto;
+    }
+
+    .text-white {
+      color: #fff;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card-glass">
-      <h2>🌦️ Malaysia Weather Monitoring by City</h2>
-
-      <div class="mb-3 mt-4">
-        <div class="input-group">
-          <select class="form-select me-2" id="citySelect">
-            <option value="" disabled selected>Select City</option>
-            <option value="Kuala Lumpur">Kuala Lumpur</option>
-            <option value="George Town">George Town</option>
-            <option value="Johor Bahru">Johor Bahru</option>
-            <option value="Kota Kinabalu">Kota Kinabalu</option>
-            <option value="Kuching">Kuching</option>
-            <option value="Ipoh">Ipoh</option>
-            <option value="Shah Alam">Shah Alam</option>
-            <option value="Malacca">Malacca</option>
-          </select>
-          <button class="btn btn-primary" onclick="getWeather()">Search</button>
-        </div>
+      <h2 class="text-center mb-4">🌦️ Malaysia Weather Monitoring</h2>
+      <div class="d-flex flex-column flex-md-row align-items-center justify-content-center gap-3">
+        <select class="form-select w-100 w-md-auto" id="citySelect">
+          <option disabled selected>Pilih Bandar</option>
+          <option value="Kuala Lumpur">Kuala Lumpur</option>
+          <option value="George Town">George Town</option>
+          <option value="Johor Bahru">Johor Bahru</option>
+          <option value="Kota Kinabalu">Kota Kinabalu</option>
+          <option value="Kuching">Kuching</option>
+          <option value="Ipoh">Ipoh</option>
+          <option value="Shah Alam">Shah Alam</option>
+          <option value="Malacca">Malacca</option>
+        </select>
+        <button class="btn btn-light" onclick="getWeather()">🔍 Cari</button>
       </div>
 
       <div id="weatherResult" class="text-center mt-4">
-        <p>Select a city to view current weather.</p>
+        <p>Sila pilih bandar untuk lihat ramalan cuaca.</p>
       </div>
 
-      <canvas id="weatherChart"></canvas>
-      <canvas id="dailyChart"></canvas>
+      <div class="chart-container">
+        <canvas id="hourlyChart"></canvas>
+      </div>
 
-      <div class="text-center mt-5">
-        <a href="index.html" class="btn btn-primary">🔙 Back to Dashboard</a>
+      <div class="chart-container">
+        <canvas id="dailyChart"></canvas>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="index.html" class="btn btn-outline-light">🔙 Kembali ke Dashboard</a>
       </div>
     </div>
   </div>
 
   <script>
     const apiKey = "f7e9df249fc00b82cf885c146d590a95";
-    let weatherChart, dailyChart;
+    let hourlyChart, dailyChart;
 
     async function getWeather() {
       const city = document.getElementById("citySelect").value;
@@ -103,161 +109,127 @@
           return;
         }
 
-        const weatherHTML = `
+        document.getElementById("weatherResult").innerHTML = `
           <div class="weather-icon">
-            <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
+            <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" alt="icon">
           </div>
-          <h3>${dataCurrent.name}</h3>
-          <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
-          <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
-          <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
-          <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
+          <h4 class="mt-2">${dataCurrent.name}</h4>
+          <p>🌡️ ${dataCurrent.main.temp} °C | 💧 ${dataCurrent.main.humidity}% | 🌬️ ${dataCurrent.wind.speed} m/s</p>
+          <p>☁️ ${dataCurrent.weather[0].description}</p>
         `;
-
-        document.getElementById("weatherResult").innerHTML = weatherHTML;
 
         await loadHourlyChart(city);
         await loadDailyChart(city);
       } catch (error) {
-        document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
+        document.getElementById("weatherResult").innerHTML = "<p>⚠️ Masalah mendapatkan data. Sila cuba lagi.</p>";
       }
     }
 
     async function loadHourlyChart(city) {
       const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
+      const times = data.list.slice(0, 8).map(i => i.dt_txt.split(" ")[1].slice(0,5));
+      const temps = data.list.slice(0, 8).map(i => i.main.temp);
 
-        const labels = data.list.slice(0, 8).map(item => item.dt_txt.split(" ")[1].slice(0, 5));
-        const temps = data.list.slice(0, 8).map(item => item.main.temp);
+      const ctx = document.getElementById("hourlyChart").getContext("2d");
+      if (hourlyChart) hourlyChart.destroy();
 
-        const ctx = document.getElementById('weatherChart').getContext('2d');
-        if (weatherChart) weatherChart.destroy();
-
-        weatherChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: `Hourly Temperature in ${city}`,
-              data: temps,
-              backgroundColor: 'rgba(75, 192, 192, 0.6)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              title: {
-                display: true,
-                text: `Temperature by Hour in ${city}`
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return `${context.parsed.y} °C`;
-                  }
-                }
+      hourlyChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: times,
+          datasets: [{
+            label: "Suhu Jam Ini (°C)",
+            data: temps,
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Ramalan Suhu Setiap Jam (${city})`,
+              color: "#fff",
+              font: {
+                size: 16
               }
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Temperature (°C)'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Time'
-                }
+            legend: { labels: { color: "#fff" } },
+            tooltip: {
+              callbacks: {
+                label: context => `${context.parsed.y} °C`
               }
             }
+          },
+          scales: {
+            x: { ticks: { color: "#fff" } },
+            y: { ticks: { color: "#fff" }, beginAtZero: true }
           }
-        });
-      } catch (error) {
-        console.error("Error loading hourly chart:", error);
-      }
+        }
+      });
     }
 
     async function loadDailyChart(city) {
       const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
 
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
+      const dailyTemps = {};
+      data.list.forEach(item => {
+        const date = item.dt_txt.split(" ")[0];
+        if (!dailyTemps[date]) dailyTemps[date] = [];
+        dailyTemps[date].push(item.main.temp);
+      });
 
-        const dailyTemps = {};
-        data.list.forEach(item => {
-          const date = item.dt_txt.split(" ")[0];
-          if (!dailyTemps[date]) dailyTemps[date] = [];
-          dailyTemps[date].push(item.main.temp);
-        });
+      const dates = Object.keys(dailyTemps).slice(0, 5);
+      const avgTemps = dates.map(d => {
+        const sum = dailyTemps[d].reduce((a,b) => a + b, 0);
+        return (sum / dailyTemps[d].length).toFixed(1);
+      });
 
-        const dates = Object.keys(dailyTemps).slice(0, 7);
-        const avgTemps = dates.map(date => {
-          const temps = dailyTemps[date];
-          const sum = temps.reduce((a, b) => a + b, 0);
-          return parseFloat((sum / temps.length).toFixed(2));
-        });
+      const ctx = document.getElementById("dailyChart").getContext("2d");
+      if (dailyChart) dailyChart.destroy();
 
-        const ctx = document.getElementById('dailyChart').getContext('2d');
-        if (dailyChart) dailyChart.destroy();
-
-        dailyChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: dates,
-            datasets: [{
-              label: `7-Day Avg Temperature in ${city}`,
-              data: avgTemps,
-              fill: true,
-              borderColor: 'rgba(255, 99, 132, 1)',
-              backgroundColor: 'rgba(255, 99, 132, 0.3)',
-              pointBackgroundColor: 'white',
-              pointBorderColor: 'red',
-              tension: 0.3
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              title: {
-                display: true,
-                text: '7-Day Temperature Forecast'
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return `${context.parsed.y} °C`;
-                  }
-                }
-              }
+      dailyChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: [{
+            label: "Purata Suhu Harian (°C)",
+            data: avgTemps,
+            borderColor: "rgba(255, 206, 86, 1)",
+            backgroundColor: "rgba(255, 206, 86, 0.2)",
+            tension: 0.4,
+            pointBackgroundColor: "white",
+            fill: true,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Ramalan Suhu 5 Hari (${city})`,
+              color: "#fff",
+              font: { size: 16 }
             },
-            scales: {
-              y: {
-                title: {
-                  display: true,
-                  text: 'Avg Temperature (°C)'
-                }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Date'
-                }
+            legend: { labels: { color: "#fff" } },
+            tooltip: {
+              callbacks: {
+                label: context => `${context.parsed.y} °C`
               }
             }
+          },
+          scales: {
+            x: { ticks: { color: "#fff" } },
+            y: { ticks: { color: "#fff" }, beginAtZero: false }
           }
-        });
-      } catch (error) {
-        console.error("Error loading daily chart:", error);
-      }
+        }
+      });
     }
   </script>
 </body>
