@@ -47,20 +47,17 @@
       justify-content: center;
       margin-top: 30px;
     }
-
-    /* Saiz canvas pie chart */
+    /* Responsive Chart Sizing */
     #covidPieChart {
       max-width: 100%;
       height: auto;
     }
 
-    /* Kecilkan saiz chart untuk skrin besar (laptop/PC) */
-    @media (min-width: 992px) {
+    @media (min-width: 768px) {
       #covidPieChart {
         max-width: 400px;
         margin: 0 auto;
       }
-    }
   </style>
 </head>
 <body>
@@ -107,20 +104,20 @@
       }
 
       try {
-        const res = await fetch(`https://disease.sh/v3/covid-19/countries/${country}`);
+        const res = await fetch(https://disease.sh/v3/covid-19/countries/${country});
         if (!res.ok) {
           throw new Error("Country not found");
         }
         const data = await res.json();
 
         // Summary section
-        document.getElementById("summary").innerHTML = `
+        document.getElementById("summary").innerHTML = 
           <p><strong>Country:</strong> ${data.country}</p>
           <p><strong>Total Cases:</strong> ${data.cases?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Recovered:</strong> ${data.recovered?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Deaths:</strong> ${data.deaths?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Active:</strong> ${data.active?.toLocaleString() ?? 'N/A'}</p>
-        `;
+        ;
 
         // Pie chart
         if (pieChart) pieChart.destroy();
@@ -142,7 +139,7 @@
               legend: { labels: { color: "white" } },
               title: {
                 display: true,
-                text: `COVID-19 in ${data.country}`,
+                text: COVID-19 in ${data.country},
                 color: "white",
                 font: { size: 18 }
               }
@@ -151,7 +148,7 @@
         });
 
       } catch (error) {
-        document.getElementById("summary").innerHTML = `<p style="color:red;">❌ Failed to load data for "${country}"</p>`;
+        document.getElementById("summary").innerHTML = <p style="color:red;">❌ Failed to load data for "${country}"</p>;
         if (pieChart) pieChart.destroy();
         console.error("Error fetching data:", error);
       }
