@@ -47,10 +47,18 @@
       justify-content: center;
       margin-top: 30px;
     }
+    /* Resize Pie Chart for desktop */
     #covidPieChart {
-      max-width: 500px;
-      max-height: 500px;
+      max-width: 400px;
+      max-height: 400px;
       margin: 0 auto;
+    }
+    /* Allow full size on small screens */
+    @media (max-width: 768px) {
+      #covidPieChart {
+        max-width: 100% !important;
+        max-height: none !important;
+      }
     }
   </style>
 </head>
@@ -74,7 +82,7 @@
       <div class="col-md-12">
         <div class="card-glass text-center h-100">
           <h4>📊 Total COVID-19 Overview</h4>
-          <canvas id="covidPieChart" width="500" height="500"></canvas>
+          <canvas id="covidPieChart"></canvas>
         </div>
       </div>
     </div>
@@ -129,6 +137,8 @@
             }]
           },
           options: {
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: { labels: { color: "white" } },
               title: {
