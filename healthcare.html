@@ -47,17 +47,19 @@
       justify-content: center;
       margin-top: 30px;
     }
-    /* Responsive Chart Sizing */
-    #covidPieChart {
-      max-width: 100%;
+
+    #chart-container {
+      position: relative;
+      margin: auto;
       height: auto;
+      width: 100%;
     }
 
     @media (min-width: 768px) {
-      #covidPieChart {
+      #chart-container {
         max-width: 400px;
-        margin: 0 auto;
       }
+    }
   </style>
 </head>
 <body>
@@ -80,7 +82,9 @@
       <div class="col-md-12">
         <div class="card-glass text-center h-100">
           <h4>📊 Total COVID-19 Overview</h4>
-          <canvas id="covidPieChart"></canvas>
+          <div id="chart-container">
+            <canvas id="covidPieChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -104,20 +108,20 @@
       }
 
       try {
-        const res = await fetch(https://disease.sh/v3/covid-19/countries/${country});
+        const res = await fetch(`https://disease.sh/v3/covid-19/countries/${country}`);
         if (!res.ok) {
           throw new Error("Country not found");
         }
         const data = await res.json();
 
         // Summary section
-        document.getElementById("summary").innerHTML = 
+        document.getElementById("summary").innerHTML = `
           <p><strong>Country:</strong> ${data.country}</p>
           <p><strong>Total Cases:</strong> ${data.cases?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Recovered:</strong> ${data.recovered?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Deaths:</strong> ${data.deaths?.toLocaleString() ?? 'N/A'}</p>
           <p><strong>Active:</strong> ${data.active?.toLocaleString() ?? 'N/A'}</p>
-        ;
+        `;
 
         // Pie chart
         if (pieChart) pieChart.destroy();
@@ -135,11 +139,12 @@
             }]
           },
           options: {
+            responsive: true,
             plugins: {
               legend: { labels: { color: "white" } },
               title: {
                 display: true,
-                text: COVID-19 in ${data.country},
+                text: `COVID-19 in ${data.country}`,
                 color: "white",
                 font: { size: 18 }
               }
@@ -148,7 +153,7 @@
         });
 
       } catch (error) {
-        document.getElementById("summary").innerHTML = <p style="color:red;">❌ Failed to load data for "${country}"</p>;
+        document.getElementById("summary").innerHTML = `<p style="color:red;">❌ Failed to load data for "${country}"</p>`;
         if (pieChart) pieChart.destroy();
         console.error("Error fetching data:", error);
       }
