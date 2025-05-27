@@ -20,24 +20,36 @@
       backdrop-filter: blur(10px);
       padding: 30px;
       box-shadow: 0 4px 30px rgba(0,0,0,0.3);
-      overflow-x: auto; /* supaya carta tak tersepit */
+      overflow-x: auto;
     }
-    
+
     h2, .weather-icon {
       text-align: center;
     }
+
     .weather-info {
       font-size: 1.2rem;
     }
+
     .icon-large {
       width: 100px;
     }
+
+    .chart-wrapper {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
     canvas {
       background-color: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
       padding: 20px;
       margin-top: 30px;
+      max-width: 100% !important;
+      height: auto !important;
     }
+
     .input-group .form-select,
     .input-group .btn {
       border-radius: 10px !important;
@@ -47,7 +59,7 @@
 <body>
   <div class="container">
     <div class="card-glass">
-      <h2>🌦️ Malaysia Weather Monitoring by City</h2>
+      <h2>🌦 Malaysia Weather Monitoring by City</h2>
 
       <div class="mb-3 mt-4">
         <div class="input-group">
@@ -70,8 +82,12 @@
         <p>Select a city to view current weather.</p>
       </div>
 
-      <canvas id="weatherChart"></canvas>
-      <canvas id="dailyChart"></canvas>
+      <div class="chart-wrapper">
+        <canvas id="weatherChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="dailyChart"></canvas>
+      </div>
 
       <div class="text-center mt-5">
         <a href="index.html" class="btn btn-primary">🔙 Back to Dashboard</a>
@@ -87,16 +103,15 @@
       const city = document.getElementById("citySelect").value;
       if (!city) return;
 
-      const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey}`;
-      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const currentUrl = https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey};
+      const forecastUrl = https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey};
 
       try {
-        // Get current weather
         const resCurrent = await fetch(currentUrl);
         const dataCurrent = await resCurrent.json();
 
         if (dataCurrent.cod !== 200) {
-          document.getElementById("weatherResult").innerHTML = `<p>⚠️ ${dataCurrent.message}</p>`;
+          document.getElementById("weatherResult").innerHTML = <p>⚠ ${dataCurrent.message}</p>;
           return;
         }
 
@@ -105,24 +120,23 @@
             <img src="https://openweathermap.org/img/wn/${dataCurrent.weather[0].icon}@2x.png" class="icon-large"/>
           </div>
           <h3>${dataCurrent.name}</h3>
-          <p class="weather-info">🌡️ Temperature: ${dataCurrent.main.temp} °C</p>
+          <p class="weather-info">🌡 Temperature: ${dataCurrent.main.temp} °C</p>
           <p class="weather-info">💧 Humidity: ${dataCurrent.main.humidity}%</p>
-          <p class="weather-info">🌬️ Wind Speed: ${dataCurrent.wind.speed} m/s</p>
-          <p class="weather-info">☁️ Condition: ${dataCurrent.weather[0].description}</p>
+          <p class="weather-info">🌬 Wind Speed: ${dataCurrent.wind.speed} m/s</p>
+          <p class="weather-info">☁ Condition: ${dataCurrent.weather[0].description}</p>
         `;
 
         document.getElementById("weatherResult").innerHTML = weatherHTML;
 
-        // Load both charts automatically
         await loadHourlyChart(city);
         await loadDailyChart(city);
       } catch (error) {
-        document.getElementById("weatherResult").innerHTML = "<p>⚠️ Error fetching weather data. Please try again later.</p>";
+        document.getElementById("weatherResult").innerHTML = "<p>⚠ Error fetching weather data. Please try again later.</p>";
       }
     }
 
     async function loadHourlyChart(city) {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const url = https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey};
 
       try {
         const res = await fetch(url);
@@ -139,7 +153,7 @@
           data: {
             labels: labels,
             datasets: [{
-              label: `Hourly Temperature in ${city}`,
+              label: Hourly Temperature in ${city},
               data: temps,
               backgroundColor: 'rgba(255, 206, 86, 0.7)',
               borderColor: 'rgba(255, 206, 86, 1)',
@@ -148,10 +162,19 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               title: {
                 display: true,
-                text: `Temperature by Hour in ${city}`
+                text: Temperature by Hour in ${city}
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  maxRotation: 0,
+                  minRotation: 0
+                }
               }
             }
           }
@@ -162,7 +185,7 @@
     }
 
     async function loadDailyChart(city) {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey}`;
+      const url = https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey};
 
       try {
         const res = await fetch(url);
@@ -190,7 +213,7 @@
           data: {
             labels: dates,
             datasets: [{
-              label: `7-Day Avg Temperature in ${city}`,
+              label: 7-Day Avg Temperature in ${city},
               data: avgTemps,
               fill: true,
               borderColor: 'rgba(255, 99, 132, 1)',
@@ -200,6 +223,7 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               title: {
                 display: true,
@@ -214,4 +238,4 @@
     }
   </script>
 </body>
-</html>  
+</html>
