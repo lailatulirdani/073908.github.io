@@ -47,17 +47,18 @@
       justify-content: center;
       margin-top: 30px;
     }
-    /* Resize Pie Chart for desktop */
+
+    /* Saiz canvas pie chart */
     #covidPieChart {
-      max-width: 400px;
-      max-height: 400px;
-      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
     }
-    /* Allow full size on small screens */
-    @media (max-width: 768px) {
+
+    /* Kecilkan saiz chart untuk skrin besar (laptop/PC) */
+    @media (min-width: 992px) {
       #covidPieChart {
-        max-width: 100% !important;
-        max-height: none !important;
+        max-width: 400px;
+        margin: 0 auto;
       }
     }
   </style>
@@ -137,8 +138,6 @@
             }]
           },
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
             plugins: {
               legend: { labels: { color: "white" } },
               title: {
