@@ -39,6 +39,7 @@
       width: 100%;
       max-width: 100%;
       overflow-x: auto;
+      height: 400px;
     }
 
     canvas {
@@ -47,7 +48,7 @@
       padding: 20px;
       margin-top: 30px;
       max-width: 100% !important;
-      height: auto !important;
+      height: 100% !important;
     }
 
     .input-group .form-select,
@@ -74,7 +75,7 @@
             <option value="Shah Alam">Shah Alam</option>
             <option value="Malacca">Malacca</option>
           </select>
-          <button class="btn btn-primary" onclick="getWeather()">Search</button>
+          <button class="btn btn-primary" id="searchBtn">Search</button>
         </div>
       </div>
 
@@ -96,12 +97,17 @@
   </div>
 
   <script>
-    const apiKey = "f7e9df249fc00b82cf885c146d590a95";
+    const apiKey = "f7e9df249fc00b82cf885c146d590a95"; // Replace with your actual API key
     let weatherChart, dailyChart;
+
+    document.getElementById("searchBtn").addEventListener("click", getWeather);
 
     async function getWeather() {
       const city = document.getElementById("citySelect").value;
-      if (!city) return;
+      if (!city) {
+        document.getElementById("weatherResult").innerHTML = <p>⚠ Please select a city.</p>;
+        return;
+      }
 
       const currentUrl = https://api.openweathermap.org/data/2.5/weather?q=${city},MY&units=metric&appid=${apiKey};
       const forecastUrl = https://api.openweathermap.org/data/2.5/forecast?q=${city},MY&units=metric&appid=${apiKey};
@@ -132,6 +138,7 @@
         await loadDailyChart(city);
       } catch (error) {
         document.getElementById("weatherResult").innerHTML = "<p>⚠ Error fetching weather data. Please try again later.</p>";
+        console.error("Error fetching weather:", error);
       }
     }
 
